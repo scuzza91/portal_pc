@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Usuarios</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <nav class="nav-links">
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="https://example.com/seccion2">Sección 2</a>
+            <a href="https://example.com/seccion3">Sección 3</a>
+            <div class="dropdown">
+                <a href="https://example.com/admin">Panel Admin</a>
+                <div class="dropdown-content">
+                    <a href="{{ url_for('admin_preguntas') }}">Admin preguntas</a>
+                    <a href="{{ url_for('gestion_usuarios') }}">Gestión usuarios</a>
+                </div>
+            </div>
+            <a href="#" id="seccion4Btn">Sección 4</a>
+            <a href="#" id="loginBtn">Acceder</a>
+        </nav>
+
+        <main>
+            <h1>Gestión de Usuarios</h1>
+            
+            <div class="users-section">
+                <button id="addUserBtn" class="btn-primary">Agregar Usuario</button>
+                
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                            <th>DNI</th>
+                            <th>Correo Electrónico</th>
+                            <th>Tipo de Usuario</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersList">
+                        <!-- Los usuarios se cargarán aquí dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Modal para agregar/editar usuario -->
+            <div id="userModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn">&times;</span>
+                    <h2>Agregar Usuario</h2>
+                    <form id="userForm">
+                        <div class="form-group">
+                            <label for="nombre">Nombre:</label>
+                            <input type="text" id="nombre" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="apellido">Apellido:</label>
+                            <input type="text" id="apellido" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="dni">DNI:</label>
+                            <input type="text" id="dni" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Correo Electrónico:</label>
+                            <input type="email" id="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tipoUsuario">Tipo de Usuario:</label>
+                            <select id="tipoUsuario" required>
+                                <option value="postulante">Postulante</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-primary">Guardar</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            Desarrollado con amor desde Argentina ❤️
+        </footer>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const usersList = document.getElementById('usersList');
+        const addUserBtn = document.getElementById('addUserBtn');
+        const userModal = document.getElementById('userModal');
+        const closeBtn = userModal.querySelector('.close-btn');
+        const userForm = document.getElementById('userForm');
+        
+        let users = [];
+        let editingUserId = null;
+
+        // Funciones auxiliares
+        function showModal() {
+            userModal.style.display = 'block';
+        }
+
+        function hideModal() {
+            userModal.style.display = 'none';
+            userForm.reset();
+            editingUserId = null;
+        }
+
+        function updateUsersList() {
+            usersList.innerHTML = '';
+            users.forEach(user => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${user.nombre}</td>
+                    <td>${user.apellido}</td>
+                    <td>${user.dni}</td>
+                    <td>${user.email}</td>
+                    <td>${user.tipoUsuario}</td>
+                    <td>
+                        <button onclick="editUser(${user.id})" class="btn-edit">Editar</button>
+                        <button onclick="deleteUser(${user.id})" class="btn-delete">Eliminar</button>
+                        <button onclick="toggleRole(${user.id})" class="btn-role">
+                            ${user.tipoUsuario === 'admin' ? 'Hacer Postulante' : 'Hacer Admin'}
+                        </button>
+                    </td>
+                `;
+                usersList.appendChild(tr);
+            });
+        }
+
+        // Event Listeners
+        addUserBtn.addEventListener('click', showModal);
+        closeBtn.addEventListener('click', hideModal);
+
+        userForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const userData = {
+                id: editingUserId || Date.now(),
+                nombre: document.getElementById('nombre').value,
+                apellido: document.getElementById('apellido').value,
+                dni: document.getElementById('dni').value,
+                email: document.getElementById('email').value,
+                tipoUsuario: document.getElementById('tipoUsuario').value
+            };
+
+            if (editingUserId) {
+                users = users.map(user => user.id === editingUserId ? userData : user);
+            } else {
+                users.push(userData);
+            }
+
+            updateUsersList();
+            hideModal();
+        });
+
+        // Funciones globales para las acciones
+        window.editUser = function(id) {
+            const user = users.find(u => u.id === id);
+            if (user) {
+                editingUserId = id;
+                document.getElementById('nombre').value = user.nombre;
+                document.getElementById('apellido').value = user.apellido;
+                document.getElementById('dni').value = user.dni;
+                document.getElementById('email').value = user.email;
+                document.getElementById('tipoUsuario').value = user.tipoUsuario;
+                showModal();
+            }
+        };
+
+        window.deleteUser = function(id) {
+            if (confirm('¿Está seguro de eliminar este usuario?')) {
+                users = users.filter(user => user.id !== id);
+                updateUsersList();
+            }
+        };
+
+        window.toggleRole = function(id) {
+            const user = users.find(u => u.id === id);
+            if (user) {
+                user.tipoUsuario = user.tipoUsuario === 'admin' ? 'postulante' : 'admin';
+                updateUsersList();
+            }
+        };
+    });
+    </script>
+</body>
+</html> 

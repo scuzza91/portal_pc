@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Preguntas - Portal PC</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css', v=2) }}">
+</head>
+<body>
+    <div class="container">
+        <nav class="nav-links">
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="https://example.com/seccion2">Sección 2</a>
+            <a href="https://example.com/seccion3">Sección 3</a>
+            <div class="dropdown">
+                <a href="https://example.com/admin">Panel Admin</a>
+                <div class="dropdown-content">
+                    <a href="{{ url_for('admin_preguntas') }}">Admin preguntas</a>
+                    <a href="{{ url_for('gestion_usuarios') }}">Gestión usuarios</a>
+                </div>
+            </div>
+            <a href="#" id="seccion4Btn">Sección 4</a>
+            <a href="#" id="loginBtn">Acceder</a>
+        </nav>
+
+        <main>
+            <h1>Administración de Preguntas</h1>
+            
+            <div class="questions-section">
+                <form class="questions-form">
+                    <h2>Agregar Nueva Pregunta</h2>
+                    <input type="text" placeholder="Título de la pregunta" required>
+                    <div class="answer-option">
+                        <input type="radio" name="correct" value="0" required>
+                        <input type="text" placeholder="Respuesta 1" required>
+                    </div>
+                    <div class="answer-option">
+                        <input type="radio" name="correct" value="1" required>
+                        <input type="text" placeholder="Respuesta 2" required>
+                    </div>
+                    <div class="answer-option">
+                        <input type="radio" name="correct" value="2" required>
+                        <input type="text" placeholder="Respuesta 3" required>
+                    </div>
+                    <div class="answer-option">
+                        <input type="radio" name="correct" value="3" required>
+                        <input type="text" placeholder="Respuesta 4" required>
+                    </div>
+                    <button type="submit">Guardar Pregunta</button>
+                </form>
+
+                <div class="saved-questions">
+                    <h2>Preguntas Guardadas</h2>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const questionsForm = document.querySelector('.questions-form');
+            const savedQuestionsList = document.getElementById('savedQuestionsList');
+            let savedQuestions = [];
+    
+            if (questionsForm) {
+                questionsForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    const title = this.querySelector('input[type="text"]').value;
+                    const answers = Array.from(this.querySelectorAll('.answer-option input[type="text"]')).map(input => input.value);
+                    const correctAnswer = parseInt(this.querySelector('input[name="correct"]:checked').value);
+                    
+                    const questionData = {
+                        title,
+                        answers,
+                        correctAnswer
+                    };
+
+                    try {
+                        const response = await fetch('/admin/preguntas/save', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(questionData)
+                        });
+
+                        if (response.ok) {
+                            alert('Pregunta guardada exitosamente!');
+                            this.reset();
+                        } else {
+                            alert('Error al guardar la pregunta');
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('Error al guardar la pregunta');
+                    }
+                });
+            }
+    
+            function updateQuestionsList() {
+                if (savedQuestionsList) {
+                    savedQuestionsList.innerHTML = '';
+                    savedQuestions.forEach((question, index) => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `
+                            <h3>${question.title}</h3>
+                            <p>Opciones:</p>
+                            <ol>
+                                ${question.answers.map((answer, i) => `
+                                    <li>${answer} ${i == question.correctAnswer ? '(Correcta)' : ''}</li>
+                                `).join('')}
+                            </ol>
+                        `;
+                        savedQuestionsList.appendChild(li);
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html> 

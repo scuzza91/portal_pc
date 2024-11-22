@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Portal PC</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css', v=2) }}">
+</head>
+<body>
+    <div class="container">
+        <nav class="nav-links">
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="{{ url_for('seccion2') }}">Sección 2</a>
+            <a href="https://example.com/seccion3">Sección 3</a>
+            <a href="#" id="seccion4Btn">Sección 4</a>
+            
+            {% if session.get('user') %}
+                {% if session['user']['role'] == 'admin' %}
+                    <div class="dropdown">
+                        <a href="#">Panel Admin</a>
+                        <div class="dropdown-content">
+                            <a href="{{ url_for('admin_preguntas') }}">Admin preguntas</a>
+                            <a href="{{ url_for('gestion_usuarios') }}">Gestión usuarios</a>
+                        </div>
+                    </div>
+                {% endif %}
+                <div class="user-menu">
+                    <span>{{ session['user']['name'] }}</span>
+                    <a href="{{ url_for('logout') }}" class="btn-logout">Cerrar Sesión</a>
+                </div>
+            {% else %}
+                <a href="#" id="loginBtn">Acceder</a>
+            {% endif %}
+        </nav>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for message in messages %}
+                        <div class="alert">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Modal de Login -->
+        <div class="overlay" id="overlay"></div>
+        
+        <div class="login-container" id="loginForm">
+            <span class="close-btn" id="closeBtn">&times;</span>
+            <form class="login-form" action="{{ url_for('login') }}" method="POST">
+                <h2>Iniciar Sesión</h2>
+                <input type="email" name="email" placeholder="Email" required>
+                <input type="password" name="password" placeholder="Contraseña" required>
+                <button type="submit">Iniciar Sesión</button>
+            </form>
+        </div>
+
+        <main>
+            <h1>Bienvenido a Portal PC</h1>
+            <div class="home-content">
+                <p>Esta es la página principal de Portal PC.</p>
+            </div>
+        </main>
+
+        <footer>
+            Desarrollado con amor desde Argentina ❤️
+        </footer>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const loginBtn = document.getElementById('loginBtn');
+        const loginForm = document.getElementById('loginForm');
+        const closeBtn = document.getElementById('closeBtn');
+        const overlay = document.getElementById('overlay');
+
+        function showModal(modal) {
+            modal.style.display = 'block';
+            overlay.style.display = 'block';
+        }
+
+        function hideModal(modal) {
+            modal.style.display = 'none';
+            overlay.style.display = 'none';
+        }
+
+        if (loginBtn) {
+            loginBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                showModal(loginForm);
+            });
+        }
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function() {
+                hideModal(loginForm);
+            });
+        }
+
+        if (overlay) {
+            overlay.addEventListener('click', function() {
+                hideModal(loginForm);
+            });
+        }
+    });
+    </script>
+</body>
+</html>

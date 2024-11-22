@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal PC</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css', v=2) }}">
+</head>
+<body>
+    <div class="container">
+        <nav class="nav-links">
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="{{ url_for('seccion2') }}">Sección 2</a>
+            <a href="https://example.com/seccion3">Sección 3</a>
+            <div class="dropdown">
+                <a href="https://example.com/admin">Panel Admin</a>
+                <div class="dropdown-content">
+                    <a href="{{ url_for('admin_preguntas') }}">Admin preguntas</a>
+                    <a href="{{ url_for('gestion_usuarios') }}">Gestión usuarios</a>
+                </div>
+            </div>
+            <a href="#" id="seccion4Btn">Sección 4</a>
+            <a href="#" id="loginBtn">Acceder</a>
+        </nav>
+
+        <div class="overlay" id="overlay"></div>
+
+        <div class="login-container" id="loginForm">
+            <span class="close-btn" id="closeBtn">&times;</span>
+            <form class="login-form">
+                <h2>Iniciar Sesión</h2>
+                <input type="email" placeholder="Email" required>
+                <input type="password" placeholder="Contraseña" required>
+                <button type="submit">Iniciar Sesión</button>
+            </form>
+        </div>
+
+        <div class="questions-container" id="questionsForm">
+            <span class="close-btn" id="closeQuestionsBtn">&times;</span>
+            <form class="questions-form">
+                <h2>Administrar Preguntas</h2>
+                <input type="text" placeholder="Título de la pregunta" required>
+                <div class="answer-option">
+                    <input type="radio" name="correct" value="0" required>
+                    <input type="text" placeholder="Respuesta 1" required>
+                </div>
+                <div class="answer-option">
+                    <input type="radio" name="correct" value="1" required>
+                    <input type="text" placeholder="Respuesta 2" required>
+                </div>
+                <div class="answer-option">
+                    <input type="radio" name="correct" value="2" required>
+                    <input type="text" placeholder="Respuesta 3" required>
+                </div>
+                <div class="answer-option">
+                    <input type="radio" name="correct" value="3" required>
+                    <input type="text" placeholder="Respuesta 4" required>
+                </div>
+                <button type="submit">Guardar Pregunta</button>
+            </form>
+        </div>
+
+        <div class="saved-questions-container" id="savedQuestionsContainer">
+            <span class="close-btn" id="closeSavedQuestionsBtn">&times;</span>
+            <h2>Preguntas Guardadas</h2>
+            <ul class="saved-questions-list" id="savedQuestionsList">
+            </ul>
+        </div>
+
+        <section class="users-section">
+            <h2>Gestión de Usuarios</h2>
+            <button class="add-user-btn" id="addUserBtn">Alta Usuario</button>
+            <table class="users-list">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Nombre</th>
+                        <th>Rol</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="usersList">
+                </tbody>
+            </table>
+        </section>
+
+        <div class="user-form-container" id="userFormContainer">
+            <span class="close-btn" id="closeUserFormBtn">&times;</span>
+            <form class="user-form">
+                <h2>Alta de Usuario</h2>
+                <input type="text" placeholder="Nombre" id="userName" required>
+                <input type="text" placeholder="Apellido" id="userLastName" required>
+                <input type="text" placeholder="DNI" id="userDNI" required>
+                <input type="email" placeholder="Correo electrónico" id="userEmail" required>
+                <select id="userRole" required>
+                    <option value="">Seleccione tipo de usuario</option>
+                    <option value="postulante">Postulante</option>
+                    <option value="admin">Admin</option>
+                </select>
+                <button type="submit">Guardar Usuario</button>
+            </form>
+        </div>
+
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+
+        <footer>
+            Desarrollado con amor desde Argentina ❤️
+        </footer>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const loginBtn = document.getElementById('loginBtn');
+        const loginForm = document.getElementById('loginForm');
+        const closeBtn = document.getElementById('closeBtn');
+        const adminQuestionsBtn = document.getElementById('adminQuestionsBtn');
+        const questionsForm = document.getElementById('questionsForm');
+        const closeQuestionsBtn = document.getElementById('closeQuestionsBtn');
+        const overlay = document.getElementById('overlay');
+        const seccion4Btn = document.getElementById('seccion4Btn');
+        const savedQuestionsContainer = document.getElementById('savedQuestionsContainer');
+        const closeSavedQuestionsBtn = document.getElementById('closeSavedQuestionsBtn');
+        const savedQuestionsList = document.getElementById('savedQuestionsList');
+        const addUserBtn = document.getElementById('addUserBtn');
+        const userFormContainer = document.getElementById('userFormContainer');
+        const closeUserFormBtn = document.getElementById('closeUserFormBtn');
+        const userForm = document.querySelector('.user-form');
+        const homeBtn = document.getElementById('homeBtn');
+
+        let savedQuestions = [];
+        let users = [
+            { id: 1, email: 'admin@example.com', name: 'Admin User', role: 'admin' },
+            { id: 2, email: 'user@example.com', name: 'Normal User', role: 'postulante' }
+        ];
+
+        function showModal(modal) {
+            modal.style.display = 'block';
+            overlay.style.display = 'block';
+        }
+
+        function hideModal(modal) {
+            modal.style.display = 'none';
+            overlay.style.display = 'none';
+        }
+
+        function updateSavedQuestionsList() {
+            savedQuestionsList.innerHTML = '';
+            savedQuestions.forEach((question, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <h3>${question.title}</h3>
+                    <p>Opciones:</p>
+                    <ol>
+                        ${question.answers.map((answer, i) => `
+                            <li>${answer} ${i == question.correctAnswer ? '(Correcta)' : ''}</li>
+                        `).join('')}
+                    </ol>
+                `;
+                savedQuestionsList.appendChild(li);
+            });
+        }
+
+        function updateUsersList() {
+            usersList.innerHTML = '';
+            users.forEach(user => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${user.email}</td>
+                    <td>${user.name}</td>
+                    <td>${user.role}</td>
+                    <td class="action-buttons">
+                        <button class="edit-btn" onclick="editUser(${user.id})">Editar</button>
+                        <button class="delete-btn" onclick="deleteUser(${user.id})">Eliminar</button>
+                        <button class="role-btn" onclick="toggleRole(${user.id})">${user.role === 'admin' ? 'Hacer Postulante' : 'Hacer Admin'}</button>
+                    </td>
+                `;
+                usersList.appendChild(tr);
+            });
+        }
+
+        if (loginBtn) {
+            loginBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                showModal(loginForm);
+            });
+        }
+
+        if (adminQuestionsBtn) {
+            adminQuestionsBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                showModal(questionsForm);
+            });
+        }
+
+        if (seccion4Btn) {
+            seccion4Btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                showModal(savedQuestionsContainer);
+                updateSavedQuestionsList();
+            });
+        }
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function() {
+                hideModal(loginForm);
+            });
+        }
+
+        if (closeQuestionsBtn) {
+            closeQuestionsBtn.addEventListener('click', function() {
+                hideModal(questionsForm);
+            });
+        }
+
+        if (closeSavedQuestionsBtn) {
+            closeSavedQuestionsBtn.addEventListener('click', function() {
+                hideModal(savedQuestionsContainer);
+            });
+        }
+
+        if (overlay) {
+            overlay.addEventListener('click', function() {
+                hideModal(loginForm);
+                hideModal(questionsForm);
+                hideModal(savedQuestionsContainer);
+            });
+        }
+
+        const loginFormElement = document.querySelector('.login-form');
+        if (loginFormElement) {
+            loginFormElement.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const email = this.querySelector('input[type="email"]').value;
+                const password = this.querySelector('input[type="password"]').value;
+                
+                users.push({
+                    id: users.length + 1,
+                    email: email,
+                    name: 'New User',
+                    role: 'postulante'
+                });
+                
+                alert('Inicio de sesión exitoso!');
+                hideModal(loginForm);
+            });
+        }
+
+        const questionsFormElement = document.querySelector('.questions-form');
+        if (questionsFormElement) {
+            questionsFormElement.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const title = this.querySelector('input[type="text"]').value;
+                const answers = Array.from(this.querySelectorAll('.answer-option input[type="text"]')).map(input => input.value);
+                const correctAnswer = parseInt(this.querySelector('input[name="correct"]:checked').value);
+                
+                savedQuestions.push({
+                    title,
+                    answers,
+                    correctAnswer
+                });
+                
+                alert('Pregunta guardada exitosamente!');
+                this.reset();
+                hideModal(questionsForm);
+                
+                if (seccion4Btn) {
+                    seccion4Btn.textContent = `Sección 4 (${savedQuestions.length})`;
+                }
+            });
+        }
+
+        window.editUser = function(userId) {
+            const user = users.find(u => u.id === userId);
+            const newName = prompt('Editar nombre:', user.name);
+            if (newName) {
+                user.name = newName;
+                updateUsersList();
+            }
+        };
+
+        window.deleteUser = function(userId) {
+            if (confirm('¿Está seguro de eliminar este usuario?')) {
+                users = users.filter(u => u.id !== userId);
+                updateUsersList();
+            }
+        };
+
+        window.toggleRole = function(userId) {
+            const user = users.find(u => u.id === userId);
+            user.role = user.role === 'admin' ? 'postulante' : 'admin';
+            updateUsersList();
+        };
+
+        if (addUserBtn) {
+            addUserBtn.addEventListener('click', function() {
+                showModal(userFormContainer);
+            });
+        }
+
+        if (closeUserFormBtn) {
+            closeUserFormBtn.addEventListener('click', function() {
+                hideModal(userFormContainer);
+            });
+        }
+
+        if (userForm) {
+            userForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const newUser = {
+                    id: users.length + 1,
+                    name: document.getElementById('userName').value + ' ' + document.getElementById('userLastName').value,
+                    email: document.getElementById('userEmail').value,
+                    dni: document.getElementById('userDNI').value,
+                    role: document.getElementById('userRole').value
+                };
+
+                users.push(newUser);
+                updateUsersList();
+                alert('Usuario creado exitosamente!');
+                this.reset();
+                hideModal(userFormContainer);
+            });
+        }
+
+        updateUsersList();
+
+        if (homeBtn) {
+            homeBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = '/';
+            });
+        }
+    });
+    </script>
+</body>
+</html>
