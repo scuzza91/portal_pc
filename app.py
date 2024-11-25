@@ -36,6 +36,9 @@ users_db = {
     'user@example.com': {'password': 'user123', 'role': 'postulante', 'name': 'Normal User'}
 }
 
+# Almacenamiento de preguntas (en producción usar una base de datos real)
+questions_db = []
+
 @app.route('/')
 @app.route('/home')
 def home():
